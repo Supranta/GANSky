@@ -41,7 +41,7 @@ class Trainer:
         self.device = device
         self.save_name = save_name
         self.save_every = save_every
-        self.writer_dir = writer_dir
+        self.writer = SummaryWriter(writer_dir) if writer_dir is not None else None
         self.i = 0
 
         if self.device is None:
@@ -149,7 +149,10 @@ class Trainer:
             self.gen_opt.step()
             self.update_gen_ema()
 
-            # TODO: Implement summary writer.
+            if self.writer is not None:
+                self.writer.add_scalars('disc', {'real': disc_loss[0], 'fake': disc_loss[1]}, self.i)
+                self.writer.add_scalars('gen', {'disc': gen_loss[0], 'ident': gen_loss[1], 'scale': gen_loss[2]},
+                                        self.i)
 
             if self.save_name is not None and self.i % self.save_every == 0:
                 self.save_models(self.save_name)
