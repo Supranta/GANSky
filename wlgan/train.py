@@ -41,20 +41,20 @@ class Trainer:
         self.device = device
         self.save_name = save_name
         self.save_every = save_every
-        self.writer = SummaryWriter(writer_dir) if writer_dir is not None else None
+        self.writer = SummaryWriter(writer_dir) if not writer_dir else None
         self.i = 0
 
-        if self.device is None:
+        if not self.device:
             if torch.cuda.is_available():
                 self.device = torch.device('cuda')
             else:
                 self.device = torch.device('cpu')
 
-        if self.gen is None:
+        if not self.gen:
             avg_mat = compute_avg_mat(self.nside, self.gen_mask).to(self.device)
             self.gen = Generator(avg_mat).to(self.device)
 
-        if self.disc is None:
+        if not self.disc:
             avg_mat = compute_avg_mat(self.nside, self.disc_mask).to(self.device)
             self.disc = Discriminator(avg_mat).to(self.device)
 
@@ -149,14 +149,15 @@ class Trainer:
             self.gen_opt.step()
             self.update_gen_ema()
 
-            if self.writer is not None:
+            if self.writer:
                 self.writer.add_scalars('disc', {'real': disc_loss[0], 'fake': disc_loss[1]}, self.i)
                 self.writer.add_scalars('gen', {'disc': gen_loss[0], 'ident': gen_loss[1], 'scale': gen_loss[2]},
                                         self.i)
 
-            if self.save_name is not None and self.i % self.save_every == 0:
+            if self.save_name and self.i % self.save_every == 0:
                 self.save_models(self.save_name)
 
             self.i += 1
 
-        self.save_models(self.save_name)
+        if self.save_name:
+            self.save_models(self.save_name)
