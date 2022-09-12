@@ -30,6 +30,7 @@ class Trainer:
         self.nside = nside
         self.gen_mask = gen_mask
         self.disc_mask = disc_mask
+        self.disc_mask_in_gen_mask = self.disc_mask[self.gen_mask]
         self.real_data = real_data
         self.fake_data = fake_data
         self.gen = gen
@@ -47,10 +48,12 @@ class Trainer:
                 self.device = torch.device('cpu')
 
         if self.gen is None:
-            # TODO: Implement
+            avg_mat = compute_avg_mat(self.nside, self.gen_mask).to(self.device)
+            self.gen = Generator(avg_mat).to(self.device)
 
         if self.disc is None:
-            # TODO: Implement
+            avg_mat = compute_avg_mat(self.nside, self.disc_mask).to(self.device)
+            self.disc = Discriminator(avg_mat).to(self.device)
 
         self.gen_ema = deepcopy(self.gen)
 
@@ -80,14 +83,14 @@ class Trainer:
 
         real.requires_grad_(True)
 
-        real_out = self.disc(real[..., int_mask_in_mask]) # TODO: Fix
+        real_out = self.disc(real[..., self.disc_mask_in_gen_mask])
         real_loss = F.relu(1 - real_out).mean()
         loss = real_loss
         loss.backward()
 
         with torch.no_grad():
             fake = self.gen(fake)
-        fake_out = self.disc(fake[..., int_mask_in_mask]) # TODO: Fix
+        fake_out = self.disc(fake[..., self.disc_mask_in_gen_mask])
         fake_loss = F.relu(1 + fake_out).mean()
         fake_loss.backward()
 
@@ -101,7 +104,7 @@ class Trainer:
             fake = next(self.fake_iter).to(self.device)
 
         gen_out = self.gen(fake)
-        fake_out = self.disc(gen_out[..., int_mask_in_mask]) # TODO: Fix
+        fake_out = self.disc(gen_out[..., self.disc_mask_in_gen_mask])
         fake_loss = -fake_out.mean()
         ident_loss = (gen_out - fake).square().mean() * 1
         scale_loss = (gen_out - fake).mean(dim=-1).square().mean() * 10
