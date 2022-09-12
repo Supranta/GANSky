@@ -1,0 +1,130 @@
+import numpy as np
+import healpy as hp
+import torch
+import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader
+import torch.nn.functional as F
+from glob import glob
+import matplotlib.pyplot as plt
+from torch.utils.tensorboard import SummaryWriter
+import os
+from model import Generator, Discriminator, compute_avg_mat
+from tqdm.auto import tqdm
+from copy import deepcopy
+
+
+class ArrayDataset(Dataset):
+    def __init__(self, dir):
+        self.files = glob(dir + '/*.npy')
+
+    def __len__(self):
+        return len(self.files)
+
+    def __getitem__(self, idx):
+        return np.load(self.files[idx])[None, :] / 0.01
+
+
+class Trainer:
+    def __init__(self, nside, gen_mask, disc_mask, real_data, fake_data, gen=None, disc=None, batch_size=128,
+                 gen_opt=None, disc_opt=None, device=None):
+        self.nside = nside
+        self.gen_mask = gen_mask
+        self.disc_mask = disc_mask
+        self.real_data = real_data
+        self.fake_data = fake_data
+        self.gen = gen
+        self.disc = disc
+        self.batch_size = 128
+        self.gen_opt = gen_opt
+        self.disc_opt = disc_opt
+        self.device = device
+        self.i = 0
+
+        if self.device is None:
+            if torch.cuda.is_available():
+                self.device = torch.device('cuda')
+            else:
+                self.device = torch.device('cpu')
+
+        if self.gen is None:
+            # TODO: Implement
+
+        if self.disc is None:
+            # TODO: Implement
+
+        self.gen_ema = deepcopy(self.gen)
+
+        self.real_loader = DataLoader(real_data, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=8)
+        self.fake_loader = DataLoader(fake_data, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=8)
+
+        self.real_iter = iter(self.real_loader)
+        self.fake_iter = iter(self.fake_loader)
+
+    @torch.no_grad()
+    def update_gen_ema(self, alpha=0.999):
+        for p, ema_p in zip(self.gen.parameters(), self.gen_ema.parameters()):
+            ema_p.data.mul_(alpha).add_(1 - alpha, p.data)
+
+    def train_disc(self):
+        try:
+            real = next(self.real_iter).to(self.device)
+        except:
+            self.real_iter = iter(self.real_loader)
+            real = next(self.real_iter).to(self.device)
+
+        try:
+            fake = next(self.fake_iter).to(self.device)
+        except:
+            self.fake_iter = iter(self.fake_loader)
+            fake = next(self.fake_iter).to(self.device)
+
+        real.requires_grad_(True)
+
+        real_out = self.disc(real[..., int_mask_in_mask]) # TODO: Fix
+        real_loss = F.relu(1 - real_out).mean()
+        loss = real_loss
+        loss.backward()
+
+        with torch.no_grad():
+            fake = self.gen(fake)
+        fake_out = self.disc(fake[..., int_mask_in_mask]) # TODO: Fix
+        fake_loss = F.relu(1 + fake_out).mean()
+        fake_loss.backward()
+
+        return real_loss, fake_loss
+
+    def train_gen(self):
+        try:
+            fake = next(self.fake_iter).to(self.device)
+        except:
+            self.fake_iter = iter(self.fake_loader)
+            fake = next(self.fake_iter).to(self.device)
+
+        gen_out = self.gen(fake)
+        fake_out = self.disc(gen_out[..., int_mask_in_mask]) # TODO: Fix
+        fake_loss = -fake_out.mean()
+        ident_loss = (gen_out - fake).square().mean() * 1
+        scale_loss = (gen_out - fake).mean(dim=-1).square().mean() * 10
+        loss = fake_loss + ident_loss + scale_loss
+        loss.backward()
+
+        return fake_loss.item(), ident_loss.item(), scale_loss.item()
+
+    def train(self, num_iter):
+        for _ in tqdm(range(num_iter)):
+            self.disc.requires_grad_(True)
+            self.disc_opt.zero_grad()
+            disc_loss = self.train_disc()
+            self.disc_opt.step()
+
+            self.disc.requires_grad_(False)
+            self.gen_opt.zero_grad()
+            gen_loss = self.train_gen()
+            self.gen_opt.step()
+            self.update_gen_ema()
+
+            # TODO: Implement summary writer.
+
+            # TODO: Impelement auto-save.
+
+            self.i += 1
