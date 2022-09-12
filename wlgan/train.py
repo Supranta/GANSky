@@ -26,7 +26,7 @@ class ArrayDataset(Dataset):
 
 class Trainer:
     def __init__(self, nside, gen_mask, disc_mask, real_data, fake_data, gen=None, disc=None, batch_size=128,
-                 gen_opt=None, disc_opt=None, device=None):
+                 gen_opt=None, disc_opt=None, device=None, save_name=None, save_every=1000, writer_dir=None):
         self.nside = nside
         self.gen_mask = gen_mask
         self.disc_mask = disc_mask
@@ -39,6 +39,9 @@ class Trainer:
         self.gen_opt = gen_opt
         self.disc_opt = disc_opt
         self.device = device
+        self.save_name = save_name
+        self.save_every = save_every
+        self.writer_dir = writer_dir
         self.i = 0
 
         if self.device is None:
@@ -62,6 +65,26 @@ class Trainer:
 
         self.real_iter = iter(self.real_loader)
         self.fake_iter = iter(self.fake_loader)
+
+    def save_models(self, fname):
+        ckpt = {'iter': self.i,
+                'gen': self.gen,
+                'disc': self.disc,
+                'gen_ema': self.gen_ema,
+                'gen_opt': self.gen_opt,
+                'disc_opt': self.disc_opt}
+
+        torch.save(ckpt, fname)
+
+    def load_models(self, fname):
+        ckpt = torch.load(fname)
+
+        self.i = ckpt['iter']
+        self.gen = ckpt['gen']
+        self.disc = ckpt['disc']
+        self.gen_ema = ckpt['gen_ema']
+        self.gen_opt = ckpt['gen_opt']
+        self.disc_opt = ckpt['disc_opt']
 
     @torch.no_grad()
     def update_gen_ema(self, alpha=0.999):
@@ -128,6 +151,9 @@ class Trainer:
 
             # TODO: Implement summary writer.
 
-            # TODO: Impelement auto-save.
+            if self.save_name is not None and self.i % self.save_every == 0:
+                self.save_models(self.save_name)
 
             self.i += 1
+
+        self.save_models(self.save_name)
