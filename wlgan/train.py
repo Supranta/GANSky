@@ -58,6 +58,12 @@ class Trainer:
             avg_mat = compute_avg_mat(self.nside, self.disc_mask).to(self.device)
             self.disc = Discriminator(avg_mat).to(self.device)
 
+        if not self.gen_opt:
+            self.gen_opt = torch.optim.Adam(self.gen.parameters(), lr=1e-3, betas=(0., 0.99))
+
+        if not self.disc_opt:
+            self.disc_opt = torch.optim.Adam(self.disc.parameters(), lr=4e-3, betas=(0., 0.99))
+
         self.gen_ema = deepcopy(self.gen)
 
         self.real_loader = DataLoader(real_data, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=8)
