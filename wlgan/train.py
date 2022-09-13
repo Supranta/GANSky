@@ -25,9 +25,9 @@ class ArrayDataset(Dataset):
 
 
 class Trainer:
-    def __init__(self, nside, gen_mask, disc_mask, real_data, fake_data, gen=None, disc=None, batch_size=128,
+    def __init__(self, gen_mask, disc_mask, real_data, fake_data, gen=None, disc=None, batch_size=128,
                  gen_opt=None, disc_opt=None, device=None, save_name=None, save_every=1000, writer_dir=None):
-        self.nside = nside
+        self.nside = hp.get_nside(gen_mask)
         self.gen_mask = gen_mask
         self.disc_mask = disc_mask
         self.disc_mask_in_gen_mask = self.disc_mask[self.gen_mask]
