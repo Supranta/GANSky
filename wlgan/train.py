@@ -41,7 +41,7 @@ class Trainer:
         self.device = device
         self.save_name = save_name
         self.save_every = save_every
-        self.writer = SummaryWriter(writer_dir) if not writer_dir else None
+        self.writer = SummaryWriter(writer_dir) if writer_dir else None
         self.i = 0
 
         if not self.device:
