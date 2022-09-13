@@ -8,7 +8,7 @@ from glob import glob
 import matplotlib.pyplot as plt
 from torch.utils.tensorboard import SummaryWriter
 import os
-from model import Generator, Discriminator, compute_avg_mat
+from .model import Generator, Discriminator, compute_avg_mat
 from tqdm.auto import tqdm
 from copy import deepcopy
 
