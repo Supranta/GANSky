@@ -119,13 +119,13 @@ class ResBlock(nn.Module):
         return o
 
 class Generator(nn.Module):
-    def __init__(self, avg_mat, num_channels=16):
+    def __init__(self, num_bins, avg_mat, num_channels=16):
         super(Generator, self).__init__()
 
         self.avg_mat = avg_mat
 
-        self.init_conv = RadialConv(in_channels=1, out_channels=num_channels)
-        self.final_conv = RadialConv(in_channels=num_channels, out_channels=1)
+        self.init_conv = RadialConv(in_channels=num_bins, out_channels=num_channels)
+        self.final_conv = RadialConv(in_channels=num_channels, out_channels=num_bins)
 
         self.layers = nn.ModuleList([
             ResBlock(num_channels, num_channels, num_channels),
@@ -147,12 +147,12 @@ class Generator(nn.Module):
         return x
 
 class Discriminator(nn.Module):
-    def __init__(self, avg_mat, num_channels=16):
+    def __init__(self, num_bins, avg_mat, num_channels=16):
         super(Discriminator, self).__init__()
 
         self.avg_mat = avg_mat
 
-        self.init_conv = RadialConv(in_channels=1, out_channels=num_channels)
+        self.init_conv = RadialConv(in_channels=num_bins, out_channels=num_channels)
         self.final_conv = RadialConv(in_channels=num_channels, out_channels=1)
 
         self.layers = nn.ModuleList([

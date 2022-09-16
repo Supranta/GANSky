@@ -21,12 +21,13 @@ class ArrayDataset(Dataset):
         return len(self.files)
 
     def __getitem__(self, idx):
-        return np.load(self.files[idx])[None, :] / 0.01
+        return np.load(self.files[idx]) / 0.01
 
 
 class Trainer:
-    def __init__(self, gen_mask, disc_mask, real_data, fake_data, gen=None, disc=None, batch_size=128,
+    def __init__(self, num_bins, gen_mask, disc_mask, real_data, fake_data, gen=None, disc=None, batch_size=128,
                  gen_opt=None, disc_opt=None, device=None, save_name=None, save_every=1000, writer_dir=None):
+        self.num_bins = num_bins
         self.nside = hp.get_nside(gen_mask)
         self.gen_mask = gen_mask
         self.disc_mask = disc_mask
@@ -52,11 +53,11 @@ class Trainer:
 
         if not self.gen:
             avg_mat = compute_avg_mat(self.nside, self.gen_mask).to(self.device)
-            self.gen = Generator(avg_mat).to(self.device)
+            self.gen = Generator(self.num_bins, avg_mat).to(self.device)
 
         if not self.disc:
             avg_mat = compute_avg_mat(self.nside, self.disc_mask).to(self.device)
-            self.disc = Discriminator(avg_mat).to(self.device)
+            self.disc = Discriminator(self.num_bins, avg_mat).to(self.device)
 
         if not self.gen_opt:
             self.gen_opt = torch.optim.Adam(self.gen.parameters(), lr=1e-3, betas=(0., 0.99))
