@@ -74,11 +74,11 @@ class Trainer:
 
     def save_models(self, fname):
         ckpt = {'iter': self.i,
-                'gen': self.gen,
-                'disc': self.disc,
-                'gen_ema': self.gen_ema,
-                'gen_opt': self.gen_opt,
-                'disc_opt': self.disc_opt}
+                'gen': self.gen.state_dict(),
+                'disc': self.disc.state_dict(),
+                'gen_ema': self.gen_ema.state_dict(),
+                'gen_opt': self.gen_opt.state_dict(),
+                'disc_opt': self.disc_opt.state_dict()}
 
         torch.save(ckpt, fname)
 
