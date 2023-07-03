@@ -1,0 +1,20 @@
+import numpy as np
+import healpy as hp
+import torch
+import wlgan as wlg
+import sys
+
+configfile = sys.argv[1]
+config = wlg.Config(configfile)
+
+gen_mask  = config.gen_mask
+disc_mask = config.disc_mask
+
+real_data = wlg.ArrayDataset(config.real_data_file)
+fake_data = wlg.ArrayDataset(config.fake_data_file)
+
+num_bins = config.n_tomo_bins
+
+trainer = wlg.Trainer(num_bins, gen_mask, disc_mask, real_data, fake_data, num_channels=config.num_channels,\
+                        save_name=config.gan_path, writer_dir=config.gan_dir)
+trainer.train(config.gan_train_steps)

@@ -119,7 +119,7 @@ class ResBlock(nn.Module):
         return o
 
 class Generator(nn.Module):
-    def __init__(self, num_bins, avg_mat, num_channels=16):
+    def __init__(self, num_bins, avg_mat, num_channels=8):
         super(Generator, self).__init__()
 
         self.avg_mat = avg_mat
@@ -147,7 +147,7 @@ class Generator(nn.Module):
         return x
 
 class Discriminator(nn.Module):
-    def __init__(self, num_bins, avg_mat, num_channels=16):
+    def __init__(self, num_bins, avg_mat, num_channels=8):
         super(Discriminator, self).__init__()
 
         self.avg_mat = avg_mat

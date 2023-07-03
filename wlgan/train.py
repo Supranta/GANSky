@@ -14,18 +14,19 @@ from copy import deepcopy
 
 
 class ArrayDataset(Dataset):
-    def __init__(self, dir):
-        self.files = glob(dir + '/*.npy')
-
+    def __init__(self, path: str):
+        std = np.array([0.00287775, 0.00482579, 0.00725469, 0.00875329]).astype(np.float32)[None, :, None]
+        self.data = np.load(path).astype(np.float32) / std
+        
     def __len__(self):
-        return len(self.files)
-
+        return self.data.shape[0]
+        
     def __getitem__(self, idx):
-        return np.load(self.files[idx]) / 0.01
+        return self.data[idx]
 
 
 class Trainer:
-    def __init__(self, num_bins, gen_mask, disc_mask, real_data, fake_data, gen=None, disc=None, batch_size=128,
+    def __init__(self, num_bins, gen_mask, disc_mask, real_data, fake_data, gen=None, disc=None, num_channels=8, batch_size=128,
                  gen_opt=None, disc_opt=None, device=None, save_name=None, save_every=1000, writer_dir=None):
         self.num_bins = num_bins
         self.nside = hp.get_nside(gen_mask)
@@ -36,6 +37,7 @@ class Trainer:
         self.fake_data = fake_data
         self.gen = gen
         self.disc = disc
+        self.num_channels = num_channels
         self.batch_size = 128
         self.gen_opt = gen_opt
         self.disc_opt = disc_opt
@@ -53,11 +55,11 @@ class Trainer:
 
         if not self.gen:
             avg_mat = compute_avg_mat(self.nside, self.gen_mask).to(self.device)
-            self.gen = Generator(self.num_bins, avg_mat).to(self.device)
+            self.gen = Generator(self.num_bins, avg_mat, num_channels=self.num_channels).to(self.device)
 
         if not self.disc:
             avg_mat = compute_avg_mat(self.nside, self.disc_mask).to(self.device)
-            self.disc = Discriminator(self.num_bins, avg_mat).to(self.device)
+            self.disc = Discriminator(self.num_bins, avg_mat, num_channels=self.num_channels).to(self.device)
 
         if not self.gen_opt:
             self.gen_opt = torch.optim.Adam(self.gen.parameters(), lr=1e-3, betas=(0., 0.99))
@@ -67,8 +69,8 @@ class Trainer:
 
         self.gen_ema = deepcopy(self.gen)
 
-        self.real_loader = DataLoader(real_data, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=8)
-        self.fake_loader = DataLoader(fake_data, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=8)
+        self.real_loader = DataLoader(real_data, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=1)
+        self.fake_loader = DataLoader(fake_data, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=1)
 
         self.real_iter = iter(self.real_loader)
         self.fake_iter = iter(self.fake_loader)
@@ -136,8 +138,8 @@ class Trainer:
         gen_out = self.gen(fake)
         fake_out = self.disc(gen_out[..., self.disc_mask_in_gen_mask])
         fake_loss = -fake_out.mean()
-        ident_loss = (gen_out - fake).square().mean() * 1
-        scale_loss = (gen_out - fake).mean(dim=-1).square().mean() * 10
+        ident_loss = (gen_out - fake).square().mean() * 0.1
+        scale_loss = (gen_out - fake).mean(dim=-1).square().mean() * 1
         loss = fake_loss + ident_loss + scale_loss
         loss.backward()
 
