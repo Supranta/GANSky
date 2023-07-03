@@ -16,5 +16,6 @@ fake_data = wlg.ArrayDataset(config.fake_data_file)
 num_bins = config.n_tomo_bins
 
 trainer = wlg.Trainer(num_bins, gen_mask, disc_mask, real_data, fake_data, num_channels=config.num_channels,\
+                        ident_loss_hp=config.ident_loss_hp, scale_loss_hp=config.scale_loss_hp,\
                         save_name=config.gan_path, writer_dir=config.gan_dir)
 trainer.train(config.gan_train_steps)

@@ -18,3 +18,5 @@ class Config:
         self.gan_dir        = config_args['gan_dir']
         self.gan_train_steps = int(config_args['gan_train_steps'])
         self.num_channels    = int(config_args['num_channels'])
+        self.ident_loss_hp   = float(config_args['ident_loss_hp'])
+        self.scale_loss_hp   = float(config_args['scale_loss_hp'])

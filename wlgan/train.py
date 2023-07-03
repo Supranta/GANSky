@@ -26,7 +26,8 @@ class ArrayDataset(Dataset):
 
 
 class Trainer:
-    def __init__(self, num_bins, gen_mask, disc_mask, real_data, fake_data, gen=None, disc=None, num_channels=8, batch_size=128,
+    def __init__(self, num_bins, gen_mask, disc_mask, real_data, fake_data, gen=None, disc=None, 
+                 num_channels=8, ident_loss_hp=0.1, scale_loss_hp=1., batch_size=128,
                  gen_opt=None, disc_opt=None, device=None, save_name=None, save_every=1000, writer_dir=None):
         self.num_bins = num_bins
         self.nside = hp.get_nside(gen_mask)
@@ -37,11 +38,12 @@ class Trainer:
         self.fake_data = fake_data
         self.gen = gen
         self.disc = disc
-        self.num_channels = num_channels
+        self.num_channels  = num_channels
         self.batch_size = 128
         self.gen_opt = gen_opt
         self.disc_opt = disc_opt
         self.device = device
+        
         self.save_name = save_name
         self.save_every = save_every
         self.writer = SummaryWriter(writer_dir) if writer_dir else None
@@ -66,6 +68,9 @@ class Trainer:
 
         if not self.disc_opt:
             self.disc_opt = torch.optim.Adam(self.disc.parameters(), lr=4e-3, betas=(0., 0.99))
+
+        self.ident_loss_hp = ident_loss_hp * torch.tensor(np.ones(self.num_bins)[None,:,None], requires_grad=False).to(self.device)
+        self.scale_loss_hp = scale_loss_hp * torch.tensor(np.ones(self.num_bins)[None,:], requires_grad=False).to(self.device)
 
         self.gen_ema = deepcopy(self.gen)
 
@@ -138,8 +143,8 @@ class Trainer:
         gen_out = self.gen(fake)
         fake_out = self.disc(gen_out[..., self.disc_mask_in_gen_mask])
         fake_loss = -fake_out.mean()
-        ident_loss = (gen_out - fake).square().mean() * 0.1
-        scale_loss = (gen_out - fake).mean(dim=-1).square().mean() * 1
+        ident_loss = ((gen_out - fake).square() * self.ident_loss_hp).mean()
+        scale_loss = ((gen_out - fake).mean(dim=-1).square() * self.scale_loss_hp).mean()
         loss = fake_loss + ident_loss + scale_loss
         loss.backward()
 
