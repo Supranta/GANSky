@@ -14,8 +14,8 @@ from copy import deepcopy
 
 
 class ArrayDataset(Dataset):
-    def __init__(self, path: str):
-        std = np.array([0.00287775, 0.00482579, 0.00725469, 0.00875329]).astype(np.float32)[None, :, None]
+    def __init__(self, path: str, kappa_std):
+        std = kappa_std.astype(np.float32)[None, :, None]
         self.data = np.load(path).astype(np.float32) / std
         
     def __len__(self):

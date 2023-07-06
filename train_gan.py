@@ -10,8 +10,8 @@ config = wlg.Config(configfile)
 gen_mask  = config.gen_mask
 disc_mask = config.disc_mask
 
-real_data = wlg.ArrayDataset(config.real_data_file)
-fake_data = wlg.ArrayDataset(config.fake_data_file)
+real_data = wlg.ArrayDataset(config.real_data_file, config.kappa_std)
+fake_data = wlg.ArrayDataset(config.fake_data_file, config.kappa_std)
 
 num_bins = config.n_tomo_bins
 
