@@ -63,11 +63,13 @@ for i in trange(nmocks):
         np.save(io_dir + '/gan_mocks/mock_%d.npy'%(i), k_gan)
         np.save(io_dir + '/ln_mocks/mock_%d.npy'%(i), k_ln)
         """
+        cl = get_cl(k_ln)
         kappa_pdf = get_1pt_pdf(k_ln, kappa_bins)
         peak_counts = get_tomo_counts(k_ln, kappa_bins, flag='peak')
         void_counts = get_tomo_counts(k_ln, kappa_bins, flag='void')
 
         with h5.File(io_dir + '/samples/sample_%d.h5'%(i), 'w') as f:
+            save_cl(f, cl)
             save_summary_1pt_pdf(f, kappa_pdf, kappa_bins)
             save_summary_peak_void_count(f, peak_counts, kappa_bins, 'peak')
             save_summary_peak_void_count(f, void_counts, kappa_bins, 'void')
