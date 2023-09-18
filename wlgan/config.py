@@ -17,6 +17,10 @@ class Config:
         self.gan_path       = config_args['gan_path']
         self.gan_io_dir     = config_args['gan_io_dir']
         self.gan_dir        = config_args['gan_dir']
+        try:
+            self.gan_init   = config_args['gan_init']
+        except:
+            self.gan_init   = None
         self.gan_train_steps = int(config_args['gan_train_steps'])
         self.num_channels    = int(config_args['num_channels'])
         self.ident_loss_hp   = float(config_args['ident_loss_hp'])

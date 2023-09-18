@@ -27,7 +27,7 @@ class ArrayDataset(Dataset):
 
 class Trainer:
     def __init__(self, num_bins, gen_mask, disc_mask, real_data, fake_data, gen=None, disc=None, 
-                 num_channels=8, ident_loss_hp=0.1, scale_loss_hp=1., batch_size=128,
+                 num_channels=8, ident_loss_hp=0.1, scale_loss_hp=1., batch_size=128, gan_init=None,
                  gen_opt=None, disc_opt=None, device=None, save_name=None, save_every=1000, writer_dir=None):
         self.num_bins = num_bins
         self.nside = hp.get_nside(gen_mask)
@@ -58,11 +58,9 @@ class Trainer:
         if not self.gen:
             avg_mat = compute_avg_mat(self.nside, self.gen_mask).to(self.device)
             self.gen = Generator(self.num_bins, avg_mat, num_channels=self.num_channels).to(self.device)
-
         if not self.disc:
             avg_mat = compute_avg_mat(self.nside, self.disc_mask).to(self.device)
             self.disc = Discriminator(self.num_bins, avg_mat, num_channels=self.num_channels).to(self.device)
-
         if not self.gen_opt:
             self.gen_opt = torch.optim.Adam(self.gen.parameters(), lr=1e-3, betas=(0., 0.99))
 
@@ -73,6 +71,10 @@ class Trainer:
         self.scale_loss_hp = scale_loss_hp * torch.tensor(np.ones(self.num_bins)[None,:], requires_grad=False).to(self.device)
 
         self.gen_ema = deepcopy(self.gen)
+        
+        if gan_init is not None:
+            print("INITIALIZING GENERATOR MODEL WITH "+str(gan_init))
+            self.load_models(gan_init)
 
         self.real_loader = DataLoader(real_data, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=1)
         self.fake_loader = DataLoader(fake_data, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=1)
@@ -94,11 +96,11 @@ class Trainer:
         ckpt = torch.load(fname)
 
         self.i = ckpt['iter']
-        self.gen = ckpt['gen']
-        self.disc = ckpt['disc']
-        self.gen_ema = ckpt['gen_ema']
-        self.gen_opt = ckpt['gen_opt']
-        self.disc_opt = ckpt['disc_opt']
+        self.gen.load_state_dict(ckpt['gen'])
+        self.disc.load_state_dict(ckpt['disc'])
+        self.gen_ema.load_state_dict(ckpt['gen_ema'])
+        self.gen_opt.load_state_dict(ckpt['gen_opt'])
+        self.disc_opt.load_state_dict(ckpt['disc_opt'])
 
     @torch.no_grad()
     def update_gen_ema(self, alpha=0.999):
