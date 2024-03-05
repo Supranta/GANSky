@@ -25,5 +25,9 @@ class Config:
         self.num_channels    = int(config_args['num_channels'])
         self.ident_loss_hp   = float(config_args['ident_loss_hp'])
         self.scale_loss_hp   = float(config_args['scale_loss_hp'])
+        try:
+            self.nl_scale_loss_hp = float(config_args['nl_scale_loss_hp'])
+        except:
+            self.nl_scale_loss_hp = 0.
         kappa_std_split_line = config_args['kappa_std'].split(',')
         self.kappa_std       = np.array([float(std) for std in kappa_std_split_line])

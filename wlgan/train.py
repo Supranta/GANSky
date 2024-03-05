@@ -27,7 +27,7 @@ class ArrayDataset(Dataset):
 
 class Trainer:
     def __init__(self, num_bins, gen_mask, disc_mask, real_data, fake_data, gen=None, disc=None, 
-                 num_channels=8, ident_loss_hp=0.1, scale_loss_hp=1., batch_size=128, gan_init=None,
+                 num_channels=8, ident_loss_hp=0.1, scale_loss_hp=1., nl_scale_loss_hp=0., batch_size=128, gan_init=None,
                  gen_opt=None, disc_opt=None, device=None, save_name=None, save_every=1000, writer_dir=None):
         self.num_bins = num_bins
         self.nside = hp.get_nside(gen_mask)
@@ -69,7 +69,8 @@ class Trainer:
 
         self.ident_loss_hp = ident_loss_hp * torch.tensor(np.ones(self.num_bins)[None,:,None], requires_grad=False).to(self.device)
         self.scale_loss_hp = scale_loss_hp * torch.tensor(np.ones(self.num_bins)[None,:], requires_grad=False).to(self.device)
-
+        self.nl_scale_loss_hp = nl_scale_loss_hp * torch.tensor(np.ones(self.num_bins)[None,:], requires_grad=False).to(self.device)
+        
         self.gen_ema = deepcopy(self.gen)
         
         if gan_init is not None:
@@ -146,7 +147,9 @@ class Trainer:
         fake_out = self.disc(gen_out[..., self.disc_mask_in_gen_mask])
         fake_loss = -fake_out.mean()
         ident_loss = ((gen_out - fake).square() * self.ident_loss_hp).mean()
-        scale_loss = ((gen_out - fake).mean(dim=-1).square() * self.scale_loss_hp).mean()
+        gen_patch_mean = gen_out.mean(dim=-1)
+        fake_patch_mean = fake.mean(dim=-1)
+        scale_loss = ((gen_patch_mean - (1. + self.nl_scale_loss_hp * fake_patch_mean) * fake_patch_mean).square() * self.scale_loss_hp).mean()
         loss = fake_loss + ident_loss + scale_loss
         loss.backward()
 
