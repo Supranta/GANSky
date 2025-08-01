@@ -3,16 +3,16 @@ import numpy as np
 import healpy as hp
 import h5py as h5
 import torch
-import wlgan as wlg
-from wlgan.model import Generator, compute_avg_mat
-from wlgan.summaries import *
-from wlgan.noisy_mocks import *
+import gansky
+from gansky.model import Generator, compute_avg_mat
+from gansky.summaries import *
+from gansky.noisy_mocks import *
 import pickle
 import os
 from tqdm.auto import tqdm, trange
 
 configfile = sys.argv[1]
-config = wlg.Config(configfile)
+config = gansky.Config(configfile)
 
 nside = config.nside
 lognorm_params_path = config.lognorm_params_path
