@@ -13,7 +13,9 @@ class Config:
         self.disc_mask = get_reordered_mask(np.load(config_args['disc_mask_file']))
         self.real_data_file = config_args['real_data_file']
         self.fake_data_file = config_args['fake_data_file']
+        self.lognorm_params_path = config_args['lognorm_params_path']
         self.n_tomo_bins    = int(config_args['n_tomo_bins'])
+        self.nside          = int(config_args['nside'])
         self.gan_path       = config_args['gan_path']
         self.gan_io_dir     = config_args['gan_io_dir']
         self.gan_dir        = config_args['gan_dir']
