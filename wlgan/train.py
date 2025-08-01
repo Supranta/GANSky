@@ -149,7 +149,7 @@ class Trainer:
         ident_loss = ((gen_out - fake).square() * self.ident_loss_hp).mean()
         gen_patch_mean = gen_out.mean(dim=-1)
         fake_patch_mean = fake.mean(dim=-1)
-        scale_loss = ((gen_patch_mean - (1. + self.nl_scale_loss_hp * fake_patch_mean) * fake_patch_mean).square() * self.scale_loss_hp).mean()
+        scale_loss = ((gen_patch_mean - (1. + self.nl_scale_loss_hp) * fake_patch_mean).square() * self.scale_loss_hp).mean()
         loss = fake_loss + ident_loss + scale_loss
         loss.backward()
 
