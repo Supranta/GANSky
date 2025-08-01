@@ -12,9 +12,10 @@ io:
     gan_io_dir: output/nside256/16channels
     gan_path: output/nside256/16channels/gan_ckpt.pt
     gan_dir: output/nside256/16channels/gan_summary_dir
+    save_checkpoint: 50000
 hyperparameters:
     gan_train_steps: 1000000
     num_channels: 16
-    ident_loss_hp: 0.02
+    ident_loss_hp: 0.0
     scale_loss_hp: 0.0
 

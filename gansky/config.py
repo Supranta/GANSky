@@ -36,6 +36,10 @@ class Config:
         self.gan_path   = config_args_io['gan_path']
         self.gan_io_dir = config_args_io['gan_io_dir']
         self.gan_dir    = config_args_io['gan_dir']
+        try:
+            self.save_checkpoint = int(config_args_io['save_checkpoint'])
+        except:
+            self.save_checkpoint = None
 
     def set_config_hp(self, config_args_hp):
         self.gan_train_steps = int(config_args_hp['gan_train_steps'])

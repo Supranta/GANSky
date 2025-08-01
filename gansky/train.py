@@ -28,7 +28,8 @@ class ArrayDataset(Dataset):
 class Trainer:
     def __init__(self, num_bins, gen_mask, disc_mask, real_data, fake_data, gen=None, disc=None, 
                  num_channels=8, ident_loss_hp=0.1, scale_loss_hp=1., nl_scale_loss_hp=0., batch_size=128, gan_init=None,
-                 gen_opt=None, disc_opt=None, device=None, save_name=None, save_every=1000, writer_dir=None):
+                 gen_opt=None, disc_opt=None, device=None, save_name=None, save_every=1000,
+                 save_checkpoint=None, writer_dir=None, io_dir=None):
         self.num_bins = num_bins
         self.nside = hp.get_nside(gen_mask)
         self.gen_mask = gen_mask
@@ -46,7 +47,10 @@ class Trainer:
         
         self.save_name = save_name
         self.save_every = save_every
+        self.save_checkpoint = save_checkpoint
+
         self.writer = SummaryWriter(writer_dir) if writer_dir else None
+        self.io_dir = io_dir
         self.i = 0
 
         if not self.device:
@@ -176,6 +180,12 @@ class Trainer:
             if self.save_name and self.i % self.save_every == 0:
                 self.save_models(self.save_name)
 
+            if self.save_checkpoint is not None:
+                if self.save_name and self.i % self.save_checkpoint == 0:
+                    if self.io_dir is not None and self.i != 0:
+                        n_model = self.i // self.save_checkpoint
+                        save_name = self.io_dir+'/gan_ckpt_%d.pt'%(n_model)
+                        self.save_models(save_name)
             self.i += 1
 
         if self.save_name:
