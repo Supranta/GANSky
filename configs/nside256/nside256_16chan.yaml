@@ -1,0 +1,20 @@
+map:
+    n_tomo_bins: 4
+    nside: 256
+data:
+    gen_mask_file: ./data/nside256/gen_mask_256.npy
+    disc_mask_file: ./data/nside256/disc_mask_256.npy
+    real_data_file: /groups/erozo/ssarmabo/wlgan/data/nside256/real_data.npy
+    fake_data_file: /groups/erozo/ssarmabo/wlgan/data/nside256/fake_data.npy
+    lognorm_params_path: ./data/nside256/lognorm_params_256.pkl
+    kappa_std: 0.002336,0.003826,0.005711,0.006866
+io:
+    gan_io_dir: output/nside256/16channels
+    gan_path: output/nside256/16channels/gan_ckpt.pt
+    gan_dir: output/nside256/16channels/gan_summary_dir
+hyperparameters:
+    gan_train_steps: 1000000
+    num_channels: 16
+    ident_loss_hp: 0.02
+    scale_loss_hp: 0.0
+
