@@ -15,7 +15,8 @@ fake_data = gansky.ArrayDataset(config.fake_data_file, config.kappa_std)
 
 num_bins = config.n_tomo_bins
 
-trainer = gansky.Trainer(num_bins, gen_mask, disc_mask, real_data, fake_data, num_channels=config.num_channels,\
+trainer = gansky.Trainer(num_bins, gen_mask, disc_mask, real_data, fake_data, 
+                        num_channels=config.num_channels, num_layers=config.num_layers,\
                         ident_loss_hp=config.ident_loss_hp, scale_loss_hp=config.scale_loss_hp, gan_init=config.gan_init,\
                         save_name=config.gan_path, writer_dir=config.gan_dir, io_dir=config.gan_io_dir, 
                         save_checkpoint=config.save_checkpoint)

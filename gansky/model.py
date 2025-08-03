@@ -119,7 +119,7 @@ class ResBlock(nn.Module):
         return o
 
 class Generator(nn.Module):
-    def __init__(self, num_bins, avg_mat, num_channels=8):
+    def __init__(self, num_bins, avg_mat, num_channels=8, num_layers=4):
         super(Generator, self).__init__()
 
         self.avg_mat = avg_mat
@@ -127,12 +127,8 @@ class Generator(nn.Module):
         self.init_conv = RadialConv(in_channels=num_bins, out_channels=num_channels)
         self.final_conv = RadialConv(in_channels=num_channels, out_channels=num_bins)
 
-        self.layers = nn.ModuleList([
-            ResBlock(num_channels, num_channels, num_channels),
-            ResBlock(num_channels, num_channels, num_channels),
-            ResBlock(num_channels, num_channels, num_channels),
-            ResBlock(num_channels, num_channels, num_channels),
-        ])
+        res_block_layers = [ResBlock(num_channels, num_channels, num_channels) for i in range(num_layers)]
+        self.layers = nn.ModuleList(res_block_layers)
 
         self.alpha = nn.Parameter(torch.tensor(1.))
 
@@ -147,7 +143,7 @@ class Generator(nn.Module):
         return x
 
 class Discriminator(nn.Module):
-    def __init__(self, num_bins, avg_mat, num_channels=8):
+    def __init__(self, num_bins, avg_mat, num_channels=8, num_layers=4):
         super(Discriminator, self).__init__()
 
         self.avg_mat = avg_mat
@@ -155,12 +151,8 @@ class Discriminator(nn.Module):
         self.init_conv = RadialConv(in_channels=num_bins, out_channels=num_channels)
         self.final_conv = RadialConv(in_channels=num_channels, out_channels=1)
 
-        self.layers = nn.ModuleList([
-            ResBlock(num_channels, num_channels, num_channels),
-            ResBlock(num_channels, num_channels, num_channels),
-            ResBlock(num_channels, num_channels, num_channels),
-            ResBlock(num_channels, num_channels, num_channels),
-        ])
+        res_block_layers = [ResBlock(num_channels, num_channels, num_channels) for i in range(num_layers)]
+        self.layers = nn.ModuleList(res_block_layers)
 
         self.alpha = nn.Parameter(torch.tensor(1.))
 

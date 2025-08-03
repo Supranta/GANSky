@@ -44,6 +44,10 @@ class Config:
     def set_config_hp(self, config_args_hp):
         self.gan_train_steps = int(config_args_hp['gan_train_steps'])
         self.num_channels    = int(config_args_hp['num_channels'])
+        try:
+            self.num_layers  = int(config_args_hp['num_layers'])
+        except:
+            self.num_layers  = 4
         self.ident_loss_hp   = float(config_args_hp['ident_loss_hp'])
         self.scale_loss_hp   = float(config_args_hp['scale_loss_hp'])
         try:

@@ -27,7 +27,8 @@ class ArrayDataset(Dataset):
 
 class Trainer:
     def __init__(self, num_bins, gen_mask, disc_mask, real_data, fake_data, gen=None, disc=None, 
-                 num_channels=8, ident_loss_hp=0.1, scale_loss_hp=1., nl_scale_loss_hp=0., batch_size=128, gan_init=None,
+                 num_channels=8, num_layers=4, 
+                 ident_loss_hp=0.1, scale_loss_hp=1., nl_scale_loss_hp=0., batch_size=128, gan_init=None,
                  gen_opt=None, disc_opt=None, device=None, save_name=None, save_every=1000,
                  save_checkpoint=None, writer_dir=None, io_dir=None):
         self.num_bins = num_bins
@@ -40,6 +41,7 @@ class Trainer:
         self.gen = gen
         self.disc = disc
         self.num_channels  = num_channels
+        self.num_layers = num_layers
         self.batch_size = 128
         self.gen_opt = gen_opt
         self.disc_opt = disc_opt
@@ -61,10 +63,10 @@ class Trainer:
 
         if not self.gen:
             avg_mat = compute_avg_mat(self.nside, self.gen_mask).to(self.device)
-            self.gen = Generator(self.num_bins, avg_mat, num_channels=self.num_channels).to(self.device)
+            self.gen = Generator(self.num_bins, avg_mat, num_channels=self.num_channels, num_layers=self.num_layers).to(self.device)
         if not self.disc:
             avg_mat = compute_avg_mat(self.nside, self.disc_mask).to(self.device)
-            self.disc = Discriminator(self.num_bins, avg_mat, num_channels=self.num_channels).to(self.device)
+            self.disc = Discriminator(self.num_bins, avg_mat, num_channels=self.num_channels, num_layers=self.num_layers).to(self.device)
         if not self.gen_opt:
             self.gen_opt = torch.optim.Adam(self.gen.parameters(), lr=1e-3, betas=(0., 0.99))
 
