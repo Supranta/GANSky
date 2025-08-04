@@ -3,10 +3,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import healpy as hp
+from tqdm import trange
 
-
-def compute_avg_mat(nside, mask):
-    mask = hp.ud_grade(mask, nside, order_in='NESTED', order_out='NESTED')
+def compute_avg_mat(nside, mask, ring_order=False):
+    if ring_order:
+        mask = hp.ud_grade(mask, nside, order_in='NESTED', order_out='NESTED')
+    else:
+        mask = hp.ud_grade(mask, nside, order_in='NESTED', order_out='NESTED')
 
     pix2ind = -np.ones(hp.nside2npix(nside), dtype=int)
     pix2ind[mask] = np.arange(mask.sum())
@@ -14,14 +17,18 @@ def compute_avg_mat(nside, mask):
 
     mask_pix = np.arange(hp.nside2npix(nside))[mask]
 
-    neighbors = hp.get_all_neighbours(nside, mask_pix, nest=True)
+    if ring_order:
+        neighbors = hp.get_all_neighbours(nside, mask_pix, nest=False)
+    else:
+        neighbors = hp.get_all_neighbours(nside, mask_pix, nest=True)
+
     weights = np.ones(mask.sum()) * np.sqrt(4)
     neighbors = pix2ind[neighbors]
 
     rows = []
     cols = []
     vals = []
-    for i in range(mask.sum()):
+    for i in trange(mask.sum()):
         for j in range(0, 8, 2):
             if neighbors[j, i] != -1:
                 rows.append(i)

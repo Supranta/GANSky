@@ -32,11 +32,26 @@ mu = lognorm_params['mu']
 
 device = torch.device('cpu')
 
-avg_mat = compute_avg_mat(nside, mask).to(device)
+avg_mat      = compute_avg_mat(nside, mask).to(device)
+avg_mat_ring = compute_avg_mat(nside, mask, True).to(device)
 
 ckpt = torch.load(config.gan_path, map_location=device)
-gen = Generator(config.n_tomo_bins, avg_mat, num_channels=config.num_channels).to(device)
+gen = Generator(config.n_tomo_bins, avg_mat, num_channels=config.num_channels, num_layers=config.num_layers).to(device)
 gen.load_state_dict(ckpt['gen_ema'])
+
+gen_ring = Generator(config.n_tomo_bins, avg_mat_ring, num_channels=config.num_channels, num_layers=config.num_layers).to(device)
+gen_ring.load_state_dict(ckpt['gen_ema'])
+
+def kappa_ln2gan(k_ln, std, ring_order=False):
+    if ring_order:
+        x_ln = torch.tensor(k_ln / std[0])[None,...].to(device, dtype=torch.float32)
+        x_gan = gen_ring(x_ln)
+        k_gan = (x_gan * std).view(num_bins, -1).cpu().numpy()
+    else:
+        x_ln = torch.tensor(hp.reorder(k_ln, r2n=True) / std[0])[None,...].to(device, dtype=torch.float32)
+        x_gan = gen(x_ln)
+        k_gan = hp.reorder((x_gan * std).view(num_bins,-1).cpu().numpy(), n2r=True)
+    return k_gan
 
 def generate_lognorm_map(nside):
     alm = hp.synalm(y_cl, lmax=lmax, new=False)
@@ -57,10 +72,10 @@ for i in trange(nstart, nend):
     with torch.no_grad():
         k_ln = generate_lognorm_map(nside)
        
-        x_ln = torch.tensor(hp.reorder(k_ln, r2n=True) / std[0])[None,...].to(device, dtype=torch.float32)
-        x_gan = gen(x_ln)
-        k_gan = hp.reorder((x_gan * std).view(num_bins,-1).cpu().numpy(), n2r=True)
+        k_gan      = kappa_ln2gan(k_ln, std)
+        k_gan_ring = kappa_ln2gan(k_ln, std, True)
 
         with h5.File(io_dir + '/kappa_samples/mock%d.h5'%(i), 'w') as f:
             f['k_ln']   = k_ln
             f['k_gan']  = k_gan
+            f['k_gan_ring']  = k_gan_ring
